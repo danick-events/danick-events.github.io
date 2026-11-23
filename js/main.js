@@ -252,94 +252,46 @@ function initForm() {
 }
 
 /* ---------------- Christmas music ----------------
-   "Jingle Bells" (1857, public domain), synthesized with the
-   Web Audio API — no audio files needed. Browsers require a
-   user gesture before playing sound, hence the button. */
+   "Jingly Bells" by Scott Holmes, source: Free Music Archive,
+   licensed CC BY-NC. Played from assets/jinglebells.mp3.
+   Browsers require a user gesture before playing sound,
+   hence the button. */
 
-const MELODY = [
-  // [note, beats] — the chorus, twice with its two endings
-  ["E4",1],["E4",1],["E4",2],["E4",1],["E4",1],["E4",2],
-  ["E4",1],["G4",1],["C4",1.5],["D4",0.5],["E4",4],
-  ["F4",1],["F4",1],["F4",1.5],["F4",0.5],["F4",1],["E4",1],["E4",1],["E4",0.5],["E4",0.5],
-  ["D4",1],["D4",1],["E4",1],["D4",2],["G4",2],
-  ["E4",1],["E4",1],["E4",2],["E4",1],["E4",1],["E4",2],
-  ["E4",1],["G4",1],["C4",1.5],["D4",0.5],["E4",4],
-  ["F4",1],["F4",1],["F4",1.5],["F4",0.5],["F4",1],["E4",1],["E4",1],["E4",0.5],["E4",0.5],
-  ["G4",1],["G4",1],["F4",1],["D4",1],["C4",4],
-];
-
-const BEAT_SECONDS = 0.42;
-const NOTE_OFFSET = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-
-function noteFreq(note) {
-  const midi = 12 * (parseInt(note.slice(-1), 10) + 1) + NOTE_OFFSET[note[0]];
-  return 440 * Math.pow(2, (midi - 69) / 12);
-}
-
-let audioCtx = null;
 let musicPlaying = false;
-let loopTimer = null;
-
-function scheduleNote(freq, start, duration) {
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.type = "triangle";
-  osc.frequency.value = freq;
-  gain.gain.setValueAtTime(0, start);
-  gain.gain.linearRampToValueAtTime(0.18, start + 0.02);
-  gain.gain.exponentialRampToValueAtTime(0.001, start + Math.max(duration * 0.95, 0.05));
-  osc.connect(gain).connect(audioCtx.destination);
-  osc.start(start);
-  osc.stop(start + duration);
-}
-
-function scheduleLoop(startAt) {
-  let t = startAt;
-  for (const [note, beats] of MELODY) {
-    scheduleNote(noteFreq(note), t, beats * BEAT_SECONDS);
-    t += beats * BEAT_SECONDS;
-  }
-  const loopMs = (t - startAt) * 1000;
-  loopTimer = setTimeout(() => {
-    if (musicPlaying) scheduleLoop(audioCtx.currentTime + 0.05);
-  }, Math.max(loopMs - 150, 100));
-}
-
-function stopMusic() {
-  musicPlaying = false;
-  clearTimeout(loopTimer);
-  if (audioCtx) {
-    audioCtx.close().catch(() => {});
-    audioCtx = null;
-  }
-}
 
 function initMusic() {
   const btn = document.getElementById("music-btn");
+  const audio = new Audio("assets/jinglebells.mp3");
+  audio.loop = true;
 
   btn.addEventListener("click", () => {
     if (musicPlaying) {
-      stopMusic();
+      audio.pause();
+      musicPlaying = false;
     } else {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      musicPlaying = true;
-      scheduleLoop(audioCtx.currentTime + 0.1);
+      audio.play().then(() => {
+        musicPlaying = true;
+      }).catch(() => {
+        musicPlaying = false;
+      }).finally(() => {
+        updateMusicBtn();
+      });
+      return;
     }
+    updateMusicBtn();
+  });
+
+  function updateMusicBtn() {
     btn.classList.toggle("playing", musicPlaying);
     btn.setAttribute("aria-pressed", String(musicPlaying));
     document.getElementById("music-label").textContent =
       I18N[currentLang][musicPlaying ? "music.pause" : "music.play"];
     btn.querySelector(".music-icon").textContent = musicPlaying ? "🎶" : "🎵";
-  });
+  }
 
   // If the language changes while playing, keep the label in sync.
-  document.getElementById("lang-en").addEventListener("click", syncMusicLabel);
-  document.getElementById("lang-pt").addEventListener("click", syncMusicLabel);
-
-  function syncMusicLabel() {
-    document.getElementById("music-label").textContent =
-      I18N[currentLang][musicPlaying ? "music.pause" : "music.play"];
-  }
+  document.getElementById("lang-en").addEventListener("click", updateMusicBtn);
+  document.getElementById("lang-pt").addEventListener("click", updateMusicBtn);
 }
 
 /* ---------------- boot ---------------- */

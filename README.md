@@ -5,7 +5,7 @@ A single-page invitation + RSVP site for the family Christmas Eve party
 
 - Static site, no build step — plain HTML/CSS/JS
 - Bilingual: English / Portuguese (toggle in the header)
-- Built-in Christmas music ("Jingle Bells", synthesized with Web Audio — no audio files)
+- Built-in Christmas music ("Jingly Bells" by Scott Holmes, Free Music Archive, CC BY-NC — `assets/jinglebells.mp3`)
 - RSVPs are collected through **Google Forms** (responses land in a Google Sheet)
 - Hosted on **GitHub Pages**
 
